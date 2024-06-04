@@ -1,0 +1,59 @@
+﻿@inject IJSRuntime JSRuntime
+<div style="width: 400px; margin: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px;">
+    <IgbButton @onclick="DownloadExcelButtonClick">Excel ファイルを作成＆ダウンロードする</IgbButton>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (Workbook.InProcessRuntime == null) Workbook.InProcessRuntime = this.JSRuntime as IJSInProcessRuntime;
+    }
+
+    private async void DownloadExcelButtonClick()
+    {
+        // WorkbookとWorksheetの作成
+        var wb = new Workbook(WorkbookFormat.Excel2007); // Excel2007形式のWorkbookを作成します
+        var ws = wb.Worksheets.Add("sheet1"); // "sheet1"という名前のWorksheetをWorkbookに追加します
+
+        // セルA1の設定
+        // セルの文字列を "test1" に設定します
+        ws.GetCell("A1").Value = "test1";
+        // セルの文字色を青色にします
+        ws.GetCell("A1").CellFormat.Font.ColorInfo = new WorkbookColorInfo(Infragistics.Core.Graphics.Colors.Red);
+        // セルの文字色を太字にします
+        ws.GetCell("A1").CellFormat.Font.Bold = ExcelDefaultableBoolean.True;
+        // セルの背景色を黄色にします
+        ws.GetCell("A1").CellFormat.Fill = CellFill.CreateSolidFill(Infragistics.Core.Graphics.Colors.Yellow);
+        // セルの下部の境界線を太線にします
+        ws.GetCell("A1").CellFormat.BottomBorderStyle = CellBorderLineStyle.Thick;
+        // セルの左側の境界線を太線にします
+        ws.GetCell("A1").CellFormat.LeftBorderStyle = CellBorderLineStyle.Thick;
+        // セルの上部の境界線を太線にします
+        ws.GetCell("A1").CellFormat.TopBorderStyle = CellBorderLineStyle.Thick;
+        // セルの右側の境界線を細線にします
+        ws.GetCell("A1").CellFormat.RightBorderStyle = CellBorderLineStyle.Thin;
+
+        // セルB1の設定
+        ws.GetCell("B1").Value = "test2";
+        ws.GetCell("B1").CellFormat.Fill = CellFill.CreateSolidFill(Infragistics.Core.Graphics.Colors.Red);
+        ws.GetCell("B1").CellFormat.Font.ColorInfo = new WorkbookColorInfo(Infragistics.Core.Graphics.Colors.White);
+        ws.GetCell("B1").CellFormat.Font.Bold = ExcelDefaultableBoolean.True;
+        ws.GetCell("B1").CellFormat.BottomBorderStyle = CellBorderLineStyle.Thick;
+        ws.GetCell("B1").CellFormat.LeftBorderStyle = CellBorderLineStyle.Thin;
+        ws.GetCell("B1").CellFormat.TopBorderStyle = CellBorderLineStyle.Thick;
+        ws.GetCell("B1").CellFormat.RightBorderStyle = CellBorderLineStyle.Thick;
+
+        using (var memoryStream = new MemoryStream())
+        {
+            wb.Save(memoryStream);
+            var workBookBytes = memoryStream.ToArray();
+
+            await this.JSRuntime.InvokeVoidAsync("downloadFromByteArray", new
+            {
+                byteArray = workBookBytes,
+                FileName = "test.xlsx",
+                ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            });
+        }
+    }
+}
